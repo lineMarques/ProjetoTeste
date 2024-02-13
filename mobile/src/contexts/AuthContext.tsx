@@ -8,7 +8,7 @@ type AuthContextData = {
     signIn: (credentials: SignInProps) => Promise<void>;
     loadingAuth: boolean;
     loading: boolean;
-    singOut: () => Promise<void>;
+    signOut: () => Promise<void>;
 }
 
 type UserProps = {
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     //desloga usuario limpando o AsyncStorage
-    async function singOut() {
+    async function signOut() {
         await AsyncStorage.clear()
             .then(() => {
                 setUser({
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated, signIn, loading, loadingAuth, singOut }} >
+        <AuthContext.Provider value={{ user, isAuthenticated, signIn, loading, loadingAuth, signOut }} >
             {children}
         </ AuthContext.Provider>
     )

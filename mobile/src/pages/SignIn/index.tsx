@@ -10,7 +10,7 @@ export default function SingIn() {
 
     //testando se o campo email e senha esta vazio
     async function handleLogin() {
-        if ((Email === '') || (Password === ' ')) {
+        if ((Email === '') || (Password === '')) {
             return
         }
 
@@ -37,6 +37,7 @@ export default function SingIn() {
                     placeholder="Digite sua senha"
                     style={styles.input}
                     placeholderTextColor={"#f0f0f0"}
+                    secureTextEntry={true}
                     value={Password}
                     onChangeText={setPassword}
                 />
@@ -62,7 +63,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#1d1d2e"
+        backgroundColor: "#101026"
     },
     logo: {
         marginBottom: 18,
@@ -79,7 +80,9 @@ const styles = StyleSheet.create({
         height: 40,
         backgroundColor: "#101026",
         marginBottom: 12,
-        borderRadius: 4,
+        borderRadius: 6,
+        borderColor: "#8A8A8A",
+        borderWidth: 1,
         paddingHorizontal: 8,
         color: "#fff"
     },
@@ -87,7 +90,7 @@ const styles = StyleSheet.create({
         width: "95%",
         height: 40,
         backgroundColor: "#3fffa3",
-        borderRadius: 4,
+        borderRadius: 10,
         justifyContent: "center",
         alignItems: "center",
 

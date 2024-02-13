@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from "react-native";
 import { Feather } from '@expo/vector-icons'
 
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+
+import { api } from '../../services/api';
 
 
 type RouteDetail = {
@@ -12,17 +14,40 @@ type RouteDetail = {
     }
 }
 
+type CategoryProps = {
+    Id: string;
+    Nome: string;
+}
+
 type OrderRouteProps = RouteProp<RouteDetail, "Order">;
 
 export default function Order() {
 
     const route = useRoute<OrderRouteProps>();
+    const navigation = useNavigation();
+
+    const [categoria, setCategoria] = useState<CategoryProps[] | []>([]);
+    const [categoriaSelecionada, setCategoriaSelecionada] = useState<CategoryProps>();
+
+    async function handleCloseOrder() {
+        try {
+           await api.delete('/pedido',{
+            params:{
+                pedido_id: route.params?.pedido_id
+            }
+           })
+
+           navigation.goBack();
+        } catch (err) {
+            console.log(err)
+        }
+    }
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Mesa {route.params.mesa}</Text>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={handleCloseOrder}>
                     <Feather name="trash-2" size={28} color={"#FF3F4b"} />
                 </TouchableOpacity>
             </View>
@@ -65,7 +90,7 @@ export default function Order() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#1d1d2e",
+        backgroundColor: "#101026",
         paddingVertical: "5%",
         paddingEnd: "4%",
         paddingStart: "4%",
@@ -86,7 +111,9 @@ const styles = StyleSheet.create({
     },
     input: {
         backgroundColor: "#101026",
-        borderRadius: 4,
+        borderRadius: 8,
+        borderColor: "#8A8A8A",
+        borderWidth: 1,
         width: "100%",
         height: 40,
         marginBottom: 12,
@@ -100,12 +127,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-
     },
     qtdText: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: '#fff'
+        color: '#fff',
 
     },
     actions: {
@@ -116,7 +142,7 @@ const styles = StyleSheet.create({
     buttonAdd: {
         width: '20%',
         backgroundColor: '#3fd1ff',
-        borderRadius: 4,
+        borderRadius: 10,
         height: 40,
         justifyContent: 'center',
         alignItems: 'center'
@@ -129,7 +155,7 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: "#3fffa3",
-        borderRadius: 4,
+        borderRadius: 10,
         height: 40,
         width: "75%",
         justifyContent: "center",
