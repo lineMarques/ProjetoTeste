@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from "react-native";
 import { Feather } from '@expo/vector-icons'
 
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 
 import { api } from '../../services/api';
+import { ModalPicker } from "../../components/ModalPicker";
 
 
 type RouteDetail = {
@@ -14,7 +15,12 @@ type RouteDetail = {
     }
 }
 
-type CategoryProps = {
+export type CategoryProps = {
+    Id: string;
+    Nome: string;
+}
+
+type ProductsProps = {
     Id: string;
     Nome: string;
 }
@@ -27,8 +33,37 @@ export default function Order() {
     const navigation = useNavigation();
 
     const [categoria, setCategoria] = useState<CategoryProps[] | []>([]);
-    const [categoriaSelecionada, setCategoriaSelecionada] = useState<CategoryProps>();
+    const [categoriaSelecionada, setCategoriaSelecionada] = useState<CategoryProps | undefined>();
+    const [modalCategoria, setModalCategoria] = useState(false);
 
+    const [produtos, setProdutos] = useState<ProductsProps[] | []>([]);
+    const [produtoSelecionado, setProdutoSelecionado] = useState<ProductsProps | undefined>();
+    const [modalProduto, setModalProduto] = useState(false);
+
+    const [quantidade, setQuantidade] = useState('1')
+
+    useEffect(() => {
+        async function loadInfo(){
+            const response = await api.get('/category')
+
+            setCategoria(response.data);
+            setCategoriaSelecionada(response.data[0]);
+        }
+        loadInfo();
+    }, [])
+
+    useEffect(() => {
+        async function loadProducts() {
+            const response = await api.get('/categoria/produto', {
+                params:{
+                    categoria_id: categoriaSelecionada?.Id
+                }
+            })
+        }
+        loadProducts();
+    }, [categoriaSelecionada])
+
+    
     async function handleCloseOrder() {
         try {
            await api.delete('/pedido',{
@@ -43,6 +78,10 @@ export default function Order() {
         }
     }
 
+    function handleChangeCategory(item: CategoryProps){
+        setCategoriaSelecionada(item);
+    }
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -52,9 +91,11 @@ export default function Order() {
                 </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.input}>
-                <Text style={{ color: "#fff" }}>Pizzas</Text>
-            </TouchableOpacity>
+            {categoria.length !== 0 && (
+                <TouchableOpacity style={styles.input} onPress={() => setModalCategoria(true)}>
+                    <Text style={{ color: "#fff" }}>{categoriaSelecionada?.Nome}</Text>
+                </TouchableOpacity>
+            )}
 
             <TouchableOpacity style={styles.input}>
                 <Text style={{ color: "#fff" }}>Sobremesas</Text>
@@ -81,6 +122,14 @@ export default function Order() {
 
 
             </View>
+
+            <Modal transparent={true} visible={modalCategoria} animationType="fade">
+                <ModalPicker 
+                    handleCloseModal={() => setModalCategoria(false)}
+                    options={categoria}
+                    selectedItem={handleChangeCategory}
+                />
+            </Modal>
 
         </View>
     )

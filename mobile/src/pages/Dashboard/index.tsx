@@ -28,7 +28,7 @@ export default function Dashboard() {
             Mesa: Number(mesa)
         })
         //se o usuario digita a mesa é direcionado para a tela Order
-        navegation.navigate('Order', { mesa: mesa, pedido_id: response.data.id });
+        navegation.navigate('Order', { mesa: mesa, pedido_id: response.data.Id });
 
         setMesa('');
     }
