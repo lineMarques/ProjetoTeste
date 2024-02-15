@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, FlatList } from "react-native";
 import { Feather } from '@expo/vector-icons'
 
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 
 import { api } from '../../services/api';
 import { ModalPicker } from "../../components/ModalPicker";
+import { ListItem } from "../../components/ListItem";
 
 
 type RouteDetail = {
@@ -25,6 +26,14 @@ type ProductsProps = {
     Nome: string;
 }
 
+type ItemProps = {
+    Id: string;
+    produto_id: string;
+    /*  Observacao: string; */
+    Nome: string;
+    Quantidade: string | number;
+}
+
 type OrderRouteProps = RouteProp<RouteDetail, "Order">;
 
 export default function Order() {
@@ -40,10 +49,11 @@ export default function Order() {
     const [produtoSelecionado, setProdutoSelecionado] = useState<ProductsProps | undefined>();
     const [modalProduto, setModalProduto] = useState(false);
 
-    const [quantidade, setQuantidade] = useState('1')
+    const [quantidade, setQuantidade] = useState('1');
+    const [items, setItems] = useState<ItemProps[]>([]);
 
     useEffect(() => {
-        async function loadInfo(){
+        async function loadInfo() {
             const response = await api.get('/category')
 
             setCategoria(response.data);
@@ -55,40 +65,70 @@ export default function Order() {
     useEffect(() => {
         async function loadProducts() {
             const response = await api.get('/categoria/produto', {
-                params:{
+                params: {
                     categoria_id: categoriaSelecionada?.Id
                 }
             })
+
+            setProdutos(response.data);
+            setProdutoSelecionado(response.data[0]);
+
         }
         loadProducts();
     }, [categoriaSelecionada])
 
-    
+    console.log(produtos)
+
     async function handleCloseOrder() {
         try {
-           await api.delete('/pedido',{
-            params:{
-                pedido_id: route.params?.pedido_id
-            }
-           })
+            await api.delete('/pedido', {
+                params: {
+                    pedido_id: route.params?.pedido_id
+                }
+            })
 
-           navigation.goBack();
+            navigation.goBack();
         } catch (err) {
             console.log(err)
         }
     }
 
-    function handleChangeCategory(item: CategoryProps){
+    function handleChangeCategory(item: CategoryProps) {
         setCategoriaSelecionada(item);
     }
+
+    function handleChangeProduct(item: ProductsProps) {
+        setProdutoSelecionado(item);
+    }
+
+    async function handleAdd() {
+        const response = await api.post('ordemPedido/add', {
+            pedido_id: route.params?.pedido_id,
+            produto_id: produtoSelecionado?.Id,
+            Quantidade: Number(quantidade)
+        })
+
+        let data = {
+            Id: response.data.Id,
+            produto_id: produtoSelecionado?.Id as string,
+            Nome: produtoSelecionado?.Nome as string,
+            Quantidade: quantidade
+        }
+
+        setItems(oldArray => [...oldArray, data]);
+    }
+
+
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Mesa {route.params.mesa}</Text>
-                <TouchableOpacity onPress={handleCloseOrder}>
-                    <Feather name="trash-2" size={28} color={"#FF3F4b"} />
-                </TouchableOpacity>
+                {items.length === 0 && (
+                    <TouchableOpacity onPress={handleCloseOrder}>
+                        <Feather name="trash-2" size={28} color={"#FF3F4b"} />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {categoria.length !== 0 && (
@@ -97,9 +137,11 @@ export default function Order() {
                 </TouchableOpacity>
             )}
 
-            <TouchableOpacity style={styles.input}>
-                <Text style={{ color: "#fff" }}>Sobremesas</Text>
-            </TouchableOpacity>
+            {produtos.length !== 0 && (
+                <TouchableOpacity style={styles.input} onPress={() => setModalProduto(true)}>
+                    <Text style={{ color: "#fff" }}>{produtoSelecionado?.Nome}</Text>
+                </TouchableOpacity>
+            )}
 
             <View style={styles.qtnContainer}>
                 <Text style={styles.qtdText}>Quantidade</Text>
@@ -112,22 +154,40 @@ export default function Order() {
             </View>
 
             <View style={styles.actions}>
-                <TouchableOpacity style={styles.buttonAdd}>
+                <TouchableOpacity style={styles.buttonAdd} onPress={handleAdd}>
                     <Text style={styles.buttonText}>+</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.button}>
+                <TouchableOpacity
+                    style={[styles.button, { opacity: items.length === 0 ? 0.3 : 1 }]}
+                    disabled={items.length === 0}
+                >
                     <Text style={styles.buttonText}>Avançar</Text>
                 </TouchableOpacity>
 
-
             </View>
 
+            <FlatList
+                showsVerticalScrollIndicator={false}
+                style={{ flex: 1, marginTop: 24 }}
+                data={items}
+                keyExtractor={(item) => item.Id}
+                renderItem={({ item }) => <ListItem data={item} />}
+            />
+
             <Modal transparent={true} visible={modalCategoria} animationType="fade">
-                <ModalPicker 
+                <ModalPicker
                     handleCloseModal={() => setModalCategoria(false)}
                     options={categoria}
                     selectedItem={handleChangeCategory}
+                />
+            </Modal>
+
+            <Modal transparent={true} visible={modalProduto} animationType="fade">
+                <ModalPicker
+                    handleCloseModal={() => setModalProduto(false)}
+                    options={produtos}
+                    selectedItem={handleChangeProduct}
                 />
             </Modal>
 
